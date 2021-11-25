@@ -1,29 +1,42 @@
 import { ResourcePicker} from "@shopify/app-bridge-react"
-import { Page } from "@shopify/polaris";
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
+import ProductPage from "../components/ProductPage";
+import ProductEmptyItem from "../components/ProductEmptyItem";
 
 function index(){
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
+  const [products, setProducts]= useState([]);
+  const [productsId, setProductsId] = useState([]);
+
+  useEffect(() => {
+    const ids = products.map((products)=> {
+      return {
+        id: products.id,
+      }
+    })
+    setProductsId(ids)
+  }, [products])
+
+  function handleProductSelection(payload) {
+    setIsOpen(false)
+    setProducts(payload.selection)
+  }
 
   return(
-    <Page
-    title="Product Selector"
-    primaryAction={{
-      content:"Product",
-      onAction: ()=> setIsOpen(true)
-    }}
-    >
+    <>
       <ResourcePicker
       resourceType="Product"
       open={isOpen}
       onCancel={()=> setIsOpen(false)}
-      onSelection={(payload) => {
-        setIsOpen(false)
-        console.log(payload)
-      }}
-
+      onSelection={ handleProductSelection}
+      initialSelectionIds={productsId}
       />
-    </Page>
-  )
+      {products.length > 0 ? (
+        <ProductPage setIsOpen={setIsOpen} products={products}/>
+      ) : ( 
+        <ProductEmptyItem setIsOpen={setIsOpen}/>
+      )}
+  </>
+  );
 }
 export default index;
