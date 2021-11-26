@@ -8,6 +8,7 @@ import next from "next";
 import Router from "koa-router";
 import fs from 'fs';
 import {Session} from '@shopify/shopify-api/dist/auth/session'
+import routes from './router/index';
 
 dotenv.config();
 const port = parseInt(process.env.PORT, 10) || 8081;
@@ -16,21 +17,25 @@ const app = next({
   dev,
 });
 const handle = app.getRequestHandler();
+const FILENAME = "./session.json"
 
 function storeCallback(session) {
   console.log('storeCallback')
-  fs.writeFileSync('./session.json', JSON.stringify(session));
+  fs.writeFileSync(FILENAME, JSON.stringify(session));
   return true
 }
 
 // this is to read the session
 function loadCallback(id){
   console.log('loadCallback')
-  const sessionResult = fs.readFileSync("./session.json", "utf8")
-  return Object.assign(
-    new Session,
-    JSON.parse(sessionResult)
-  );
+  if(fs.existsSync(FILENAME)) {
+    const sessionResult = fs.readFileSync(FILENAME, "utf8")
+    return Object.assign(
+      new Session(),
+      JSON.parse(sessionResult)
+    );
+  }
+  return false
 }
 
 function deleteCallback(id) {
@@ -57,6 +62,11 @@ Shopify.Context.initialize({
 // Storing the currently active shops in memory will force them to re-login when your server restarts. You should
 // persist this object in your app.
 const ACTIVE_SHOPIFY_SHOPS = {};
+const session = loadCallback();
+if (session?.shop && session?.scope){
+  console.log('session', session);
+  ACTIVE_SHOPIFY_SHOPS[session.shop] = session.scope;
+}
 
 app.prepare().then(async () => {
   const server = new Koa();
@@ -113,6 +123,8 @@ app.prepare().then(async () => {
       await Shopify.Utils.graphqlProxy(ctx.req, ctx.res);
     }
   );
+  
+  server.use(routes());
 
   router.get("(/_next/static/.*)", handleRequest); // Static content is clear
   router.get("/_next/webpack-hmr", handleRequest); // Webpack content is clear
