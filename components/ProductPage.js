@@ -8,7 +8,7 @@ function ProductPage({setIsOpen, products}) {
         title="Product Selector"
         primaryAction={{
           content:"Product",
-          onAction: ()=> setIsOpen(true)
+          onClick: ()=> setIsOpen(true)
         }}
         >
           <ProductList products={products}/>

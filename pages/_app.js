@@ -7,6 +7,7 @@ import { authenticatedFetch } from "@shopify/app-bridge-utils";
 import { Redirect } from "@shopify/app-bridge/actions";
 import "@shopify/polaris/dist/styles.css";
 import translations from "@shopify/polaris/locales/en.json";
+import ClientRouter from "../components/ClientRouter";
 
 function userLoggedInFetch(app) {
   const fetchFunction = authenticatedFetch(app);
@@ -52,14 +53,15 @@ function MyProvider(props) {
 class MyApp extends App {
   render() {
     const { Component, pageProps} = this.props;
-    const SHOP = 'muziqa.myshopify.com'
+    const shopOrigin = 'muziqa.myshopify.com'
 
-    const config = { apiKey: API_KEY, shopOrigin: SHOP, forceRedirect: true, host: Buffer.from("muziqa.myshopify.com/admin").toString('base64') };
+    const config = { apiKey: API_KEY, shopOrigin: shopOrigin, forceRedirect: true, host: Buffer.from("muziqa.myshopify.com/admin").toString('base64') };
 
     return (
       <AppProvider i18n={translations}>
         <Provider config={config}>
-          <MyProvider Component={Component} {...pageProps} />
+          <ClientRouter/>
+          <MyProvider Component={Component} {...pageProps} shopOrigin={shopOrigin} />
         </Provider>
       </AppProvider>
     );

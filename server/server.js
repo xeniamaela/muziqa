@@ -6,6 +6,8 @@ import Shopify, { ApiVersion } from "@shopify/shopify-api";
 import Koa from "koa";
 import next from "next";
 import Router from "koa-router";
+import fs from 'fs';
+import {Session} from '@shopify/shopify-api/dist/auth/session'
 
 dotenv.config();
 const port = parseInt(process.env.PORT, 10) || 8081;
@@ -15,6 +17,32 @@ const app = next({
 });
 const handle = app.getRequestHandler();
 
+function storeCallback(session) {
+  console.log('storeCallback')
+  fs.writeFileSync('./session.json', JSON.stringify(session));
+  return true
+}
+
+// this is to read the session
+function loadCallback(id){
+  console.log('loadCallback')
+  const sessionResult = fs.readFileSync("./session.json", "utf8")
+  return Object.assign(
+    new Session,
+    JSON.parse(sessionResult)
+  );
+}
+
+function deleteCallback(id) {
+  console.log('deleteCallback')
+}
+
+const sessionStorage = new Shopify.Session.CustomSessionStorage(
+  storeCallback,
+  loadCallback,
+  deleteCallback
+)
+
 Shopify.Context.initialize({
   API_KEY: process.env.SHOPIFY_API_KEY,
   API_SECRET_KEY: process.env.SHOPIFY_API_SECRET,
@@ -23,7 +51,7 @@ Shopify.Context.initialize({
   API_VERSION: ApiVersion.October20,
   IS_EMBEDDED_APP: true,
   // This should be replaced with your preferred storage strategy
-  SESSION_STORAGE: new Shopify.Session.MemorySessionStorage(),
+  SESSION_STORAGE: sessionStorage,
 });
 
 // Storing the currently active shops in memory will force them to re-login when your server restarts. You should
